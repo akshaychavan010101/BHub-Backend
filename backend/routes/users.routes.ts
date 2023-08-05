@@ -15,54 +15,6 @@ interface User {
   password: string;
 }
 
-UserRouter.post("/register", async (req: any, res: any) => {
-  try {
-    const { email, password } = req.body;
-
-    // Check if email and password are provided
-    if (!email || !password) {
-      const response: ApiResponse<null> = {
-        status: 0,
-        data: null,
-        message: "Email and password are required",
-      };
-      return res.status(400).json(response);
-    }
-    // Hash password
-    const hashedPassword: string = await bcrypt.hash(password, 10);
-    // Check if user exists already
-    const ispresent: User = await UserModel.findOne({ email });
-
-    // If user exists, return error
-    if (ispresent) {
-      const response: ApiResponse<null> = {
-        status: 0,
-        data: null,
-        message: "User already exists",
-      };
-      return res.status(400).json(response);
-    }
-
-    // Create user, save to database and return success message
-    const user = new UserModel({ email: email, password: hashedPassword });
-    await user.save();
-    const response: ApiResponse<null> = {
-      status: 1,
-      data: null,
-      message: "User registered successfully",
-    };
-
-    return res.status(201).json(response);
-  } catch (error: any) {
-    console.log(error);
-    const response: ApiResponse<null> = {
-      status: 0,
-      data: null,
-      message: "Server error",
-    };
-    return res.status(500).json(response);
-  }
-});
 
 UserRouter.post("/login", async (req: any, res: any) => {
   try {
