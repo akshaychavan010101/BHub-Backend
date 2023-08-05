@@ -40,6 +40,10 @@ const LoginForm: React.FC = () => {
 
       window.location.href = "/product-list";
     } catch (error: any) {
+      if (error.response === undefined) {
+        alert("Login failed, Server Error");
+        return;
+      }
       const errorMessage = error.response.data;
       alert(errorMessage.message || "Login failed");
     }

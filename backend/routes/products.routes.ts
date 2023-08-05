@@ -21,6 +21,14 @@ const ProductRouter = express.Router();
 ProductRouter.post("/add", async (req: any, res: any) => {
   try {
     const { image, name, price, description, quantity } = req.body;
+    if (!image || !name || !price || !description || !quantity) {
+      const response: ApiResponse<null> = {
+        status: 0,
+        data: null,
+        message: "Missing required fields",
+      };
+      return res.status(400).json(response);
+    }
     const product = new ProductModel({
       image,
       name,
@@ -43,6 +51,57 @@ ProductRouter.post("/add", async (req: any, res: any) => {
       message: "Error adding product",
     };
     return res.status(500).json(response);
+  }
+});
+
+// edit product route
+ProductRouter.patch("/edit/:id", async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+    const { image, name, price, description, quantity } = req.body;
+
+    if (!id || !image || !name || !price || !description || !quantity) {
+      const response: ApiResponse<null> = {
+        status: 0,
+        data: null,
+        message: "Missing required fields",
+      };
+      return res.status(400).json(response);
+    }
+
+    const isUpdated = await ProductModel.findByIdAndUpdate(id, {
+      image,
+      name,
+      price,
+      description,
+      quantity,
+    });
+
+    if (!isUpdated) {
+      const response: ApiResponse<null> = {
+        status: 0,
+        data: null,
+        message: "Product not found",
+      };
+      return res.status(404).json(response);
+    }
+
+    const response: ApiResponse<null> = {
+      status: 1,
+      data: null,
+      message: "Product updated successfully",
+    };
+
+    return res.status(200).json(response);
+  } catch (error: any) {
+    console.log(error);
+    const response: ApiResponse<null> = {
+      status: 0,
+      data: null,
+      message: "Error updating product",
+    };
+
+    res.status(500).json(response);
   }
 });
 
@@ -69,7 +128,7 @@ ProductRouter.get("/get-all", async (req: any, res: any) => {
 });
 
 // pagination route
-ProductRouter.get("/get-all/:page", async (req: any, res: any) => {
+ProductRouter.get("/paginate/:page", async (req: any, res: any) => {
   try {
     const page: number = req.params.page;
     const limit: number = 10;
@@ -95,40 +154,24 @@ ProductRouter.get("/get-all/:page", async (req: any, res: any) => {
   }
 });
 
-// search route
-ProductRouter.get("/search/:searchTerm", async (req: any, res: any) => {
+// search and sort route
+ProductRouter.get("/:searchTerm/:sortOrder", async (req: any, res: any) => {
   try {
     const searchTerm: string = req.params.searchTerm;
-
-    const products: Product[] = await ProductModel.find({
-      name: { $regex: searchTerm, $options: "i" },
-    });
-
-    const response: ApiResponse<Product[]> = {
-      status: 1,
-      data: products,
-      message: "Products fetched successfully",
-    };
-
-    return res.status(200).json(response);
-  } catch (error) {
-    console.log(error);
-    const response: ApiResponse<null> = {
-      status: 0,
-      data: null,
-      message: "Error fetching products",
-    };
-    return res.status(500).json(response);
-  }
-});
-
-// sort route
-ProductRouter.get("/sort/:sortOrder", async (req: any, res: any) => {
-  try {
     const sortOrder: string = req.params.sortOrder;
-    const products: Product[] = await ProductModel.find().sort({
-      price: sortOrder,
-    });
+
+    let products: Product[] = [];
+    if (searchTerm == "all") {
+      products = await ProductModel.find().sort({
+        price: sortOrder,
+      });
+    } else {
+      products = await ProductModel.find({
+        name: { $regex: searchTerm, $options: "i" },
+      }).sort({
+        price: sortOrder,
+      });
+    }
     const response: ApiResponse<Product[]> = {
       status: 1,
       data: products,

@@ -5,7 +5,7 @@ const baseUrl: string = "http://localhost:4000";
 
 // Define the type for the product data
 export interface Product {
-  id: number;
+  _id: string;
   image: string;
   name: string;
   price: number;
@@ -43,12 +43,55 @@ const productSlice = createSlice({
       state.loading = false;
       state.error = action.payload;
     },
+
+    // Add a new product
+    addProductStart(state) {
+      state.loading = true;
+    },
+    addProductSuccess(state, action: PayloadAction<Product>) {
+      state.products.push(action.payload);
+      state.loading = false;
+      state.error = null;
+    },
+    addProductFailure(state, action: PayloadAction<string>) {
+      state.loading = false;
+      state.error = action.payload;
+    },
+
+    // Update an existing product
+    updateProductStart(state) {
+      state.loading = true;
+    },
+    updateProductSuccess(state, action: PayloadAction<Product>) {
+      const updatedProduct = action.payload;
+      const index = state.products.findIndex(
+        (product) => product._id === updatedProduct._id
+      );
+      if (index !== -1) {
+        state.products[index] = updatedProduct;
+      }
+      state.loading = false;
+      state.error = null;
+    },
+    updateProductFailure(state, action: PayloadAction<string>) {
+      state.loading = false;
+      state.error = action.payload;
+    },
   },
 });
 
 // Export the action creators
-export const { getProductsStart, getProductsSuccess, getProductsFailure } =
-  productSlice.actions;
+export const {
+  getProductsStart,
+  getProductsSuccess,
+  getProductsFailure,
+  addProductStart,
+  addProductSuccess,
+  addProductFailure,
+  updateProductStart,
+  updateProductSuccess,
+  updateProductFailure,
+} = productSlice.actions;
 
 // Export the reducer
 export default productSlice.reducer;
@@ -70,6 +113,10 @@ export const fetchProducts: any =
         `${baseUrl}/api/v1/products/${serachTerm}/${sortOrder}`
       );
 
+      if (data && data.data.length === 0) {
+        return dispatch(getProductsFailure("No products found"));
+      }
+
       dispatch(getProductsSuccess(data.data));
     } catch (error: any) {
       dispatch(getProductsFailure(error.message));
@@ -80,9 +127,55 @@ export const fetchProductsByPage: any =
   (page: number) => async (dispatch: any) => {
     try {
       dispatch(getProductsStart());
-      const { data } = await axios.get(`${baseUrl}/api/v1/products/paginate/${page}`);
+      const { data } = await axios.get(
+        `${baseUrl}/api/v1/products/paginate/${page}`
+      );
       dispatch(getProductsSuccess(data.data));
     } catch (error: any) {
       dispatch(getProductsFailure(error.message));
+    }
+  };
+
+// Async action to add a new product
+export const addProduct: any =
+  (addProduct: Product) => async (dispatch: any) => {
+    try {
+      dispatch(addProductStart());
+      const { data } = await axios.post(
+        `${baseUrl}/api/v1/products/add`,
+        addProduct
+      );
+      dispatch(addProductSuccess(data.data));
+      alert(data.message);
+      window.location.href = "/product-list";
+    } catch (error: any) {
+      dispatch(addProductFailure("Something went wrong"));
+      alert("Something went wrong");
+    }
+  };
+
+// Async action to update an existing product
+export const updateProduct: any =
+  (updatePro: Product) => async (dispatch: any) => {
+    try {
+      const body = {
+        name: updatePro.name,
+        description: updatePro.description,
+        price: updatePro.price,
+        quantity: updatePro.quantity,
+        image: updatePro.image,
+      };
+
+      dispatch(updateProductStart());
+      const { data } = await axios.patch(
+        `${baseUrl}/api/v1/products/edit/${updatePro._id}`,
+        body
+      );
+      dispatch(updateProductSuccess(data.data));
+      alert(data.message);
+      window.location.href = "/product-list";
+    } catch (error: any) {
+      dispatch(updateProductFailure("Something went wrong"));
+      alert(error.message);
     }
   };

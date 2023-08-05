@@ -8,6 +8,8 @@ import {
 } from "../store/productSlice";
 import { Typography } from "@mui/material";
 import { Button, TextField } from "@mui/material";
+import { useNavigate, useLocation, Routes, Route } from "react-router-dom";
+import AddEditProduct from "./AddEditProduct";
 
 const ProductList: React.FC = () => {
   const { products, loading, error } = useSelector(
@@ -15,6 +17,8 @@ const ProductList: React.FC = () => {
   );
 
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState(1);
@@ -24,6 +28,15 @@ const ProductList: React.FC = () => {
     dispatch(fetchProducts());
     dispatch(fetchProductsByPage());
   }, [dispatch]);
+
+  const handleEditProduct = (product: Product) => {
+    // Navigate to AddEditProduct component with the product to edit
+    navigate("/edit", { state: { product } });
+  };
+
+  const handleAddProduct = () => {
+    navigate("/add");
+  };
 
   const handleSearch = (searchTerm: string) => {
     dispatch(fetchProducts(searchTerm, 1));
@@ -117,7 +130,18 @@ const ProductList: React.FC = () => {
           Sort ZtoA
         </Button>
       </div>
+      <div></div>
       <div>{error && <Typography variant="h6">Error: {error}</Typography>}</div>
+      <div>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => handleAddProduct()}
+          style={{ margin: "10px" }}
+        >
+          Add
+        </Button>
+      </div>
       <div
         style={{
           display: "grid",
@@ -127,7 +151,7 @@ const ProductList: React.FC = () => {
       >
         {products.map((product: Product) => (
           <div
-            key={product.id}
+            key={product._id}
             style={{
               border: "1px solid black",
               padding: "10px",
@@ -146,12 +170,35 @@ const ProductList: React.FC = () => {
             <Typography>Price: ${product.price}</Typography>
             <Typography>Description: {product.description}</Typography>
             <Typography>Quantity: {product.quantity}</Typography>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => handleEditProduct(product)}
+              style={{ margin: "10px" }}
+            >
+              Edit
+            </Button>
+            <Routes>
+              <Route
+                path="/edit"
+                element={
+                  <AddEditProduct
+                    product={location.state?.product}
+                    onCancel={() => navigate("/")}
+                  />
+                }
+              />
+              <Route
+                path="/add"
+                element={<AddEditProduct onCancel={() => navigate("/")} />}
+              />
+            </Routes>
           </div>
         ))}
       </div>
       <div>
         {Array.from(
-          { length: Math.ceil(products.length / 10) },
+          { length: Math.ceil(products.length / 5) },
           (_, index) => index + 1
         ).map((pageNumber) => (
           <Button

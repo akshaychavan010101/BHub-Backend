@@ -7,6 +7,7 @@ import store from "./store"; // Assuming you have the store set up correctly
 import LoginForm from "./components/LoginForm";
 import ProductList from "./components/ProductList";
 import { Container, CssBaseline, Typography } from "@mui/material";
+import AddEditProduct from "./components/AddEditProduct";
 
 function App() {
   return (
@@ -22,6 +23,28 @@ function App() {
           <Routes>
             <Route path="/" element={<LoginForm />} />
             <Route path="/product-list" element={<ProductList />} />
+            <Route
+              path="/edit"
+              element={
+                <AddEditProduct
+                  onCancel={() => {
+                    window.location.href = "/product-list";
+                  }}
+                />
+              }
+            />
+            <Route
+              path="/add"
+              element={
+                <AddEditProduct
+                  onCancel={() => {
+                    window.location.href = "/product-list";
+                  }}
+                />
+              }
+            />
+
+            <Route path="*" element={<h1>Not Found</h1>} />
           </Routes>
         </Container>
       </Router>
