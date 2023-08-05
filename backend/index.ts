@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const connection = require("./db");
+const connection = require("./config/db");
 require("dotenv").config();
 import UserRouter from "./routes/users.routes";
 import ProductRouter from "./routes/products.routes";
